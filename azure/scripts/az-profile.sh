@@ -31,7 +31,7 @@ COLOR_PS1_DEFAULT_FG=$'\033[39m'
 Usage()
 {
   echo ""
-  echo "Usage: $programName -option"
+  echo "Usage: $programName -<option>"
   echo ""
   echo "options:"
   echo "- ps1                  : Only used in the initial setting in the .bash_profile"

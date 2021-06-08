@@ -9,16 +9,24 @@ BASENAME=$(echo $(basename "$0") | sed -e 's/.sh//g')
 [ -z $CI_COMMIT_BRANCH ] && CI_COMMIT_BRANCH="develop"
 
 read -r -d '' layers <<- EOM
-02-vault
-09-networking
-10-k8s-cluster
-11-k8s-infrastructure
-15-k8s-app-gw-ingress
-19-k8s-network-policies
-21-k8s-opa-policy-templates
-22-k8s-opa-policies
-30-k8s-kured
-50-k8s-storage
+# 02-vault
+# 03-storage
+# 09-networking
+# 10-k8s-cluster
+# 11-k8s-monitoring
+# 12-k8s-logging
+# 12-k8s-logging-config
+# 13-k8s-kubecost
+# # 14-k8s-kuberhealthy
+# 15-k8s-app-gw-ingress
+# 19-k8s-network-policies
+# 20-k8s-opa-gatekeeper
+# 21-k8s-opa-policy-templates
+# 22-k8s-opa-policies
+# 30-k8s-kured
+# 50-k8s-storage
+# 60-k8s-backup
+# 99-k8s-services-ingress
 EOM
 
 Usage()
@@ -34,7 +42,10 @@ Usage()
   echo ""
   echo "trigger:"
   echo "values    : variables[<key>]=<value>"
-  echo "$PROGRAM -trigger variables[REPO_DIR]=02-vault"
+  echo ""
+  echo "Examples:"
+  echo "$PROGRAM -ref sandbox -trigger"
+  echo "$PROGRAM -ref sandbox -project 5892 -server git.eon-cds.de -trigger variables[REPO_DIR]=09-networking"
   exit 5
 }
 
@@ -88,14 +99,18 @@ ReadParams()
 ReadParams "$@"
 
 if [ ! -z $triggerValues ]; then
-  [ -z $GITLAB_CI_TRIGGER_TOKEN ] && echo "Missing \$GITLAB_CI_TRIGGER_TOKEN. Exitting....." && exit 5
+  [ -z $GITLAB_CI_TRIGGER_TOKEN ] && echo "Missing \$GITLAB_CI_TRIGGER_TOKEN . Exitting....." && exit 5
 
   echo "CI_SERVER_URL      : $CI_SERVER_URL"
   echo "CI_PROJECT_ID      : $CI_PROJECT_ID"
   echo "CI_COMMIT_BRANCH   : $CI_COMMIT_BRANCH"
 
   if [[ "$triggerValues" == "all" ]]; then
+    OLDIFS=$IFS
+    IFS=$'\n'
     for layer in $layers; do
+      [ ! -d $layer ] && continue
+      [[ $layer =~ ^[[:space:]]*[\#]+ ]] && continue
       echo "Triggering layer $layer"
       curl --request POST \
         --form "token=$GITLAB_CI_TRIGGER_TOKEN" \
@@ -105,6 +120,7 @@ if [ ! -z $triggerValues ]; then
       echo ""
       sleep 5
     done
+    IFS=$OLDIFS
   else
     echo "Triggering pipeline "
     curl --request POST \

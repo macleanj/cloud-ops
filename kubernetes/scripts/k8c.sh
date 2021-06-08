@@ -57,6 +57,18 @@ ReadParams()
         shift 2
       fi
 			;;
+		"-c"|"-count")
+      if [[ ${2} =~ "^-" || -z ${2} ]]; then
+        count="all";
+        shift 1
+      else
+        count="${2}"
+        shift 2
+      fi
+			;;
+		"-pressure")
+        option="pressure"; shift 1
+			;;
 		"-ppn")
         option="ppn"; shift 1
 			;;
@@ -114,6 +126,21 @@ getZones()
   fi
 }
 
+# Function getting the pressure of resources
+getPressure()
+{
+  resourceType="${1}"
+  if [[ "$resourceType" == "node" ]]; then
+    allResources=$(kubectl get ${resourceType} -A | grep -v NAME | sed -E 's/^([^ ]+) .*/\1/g')
+    for resource in $allResources; do
+      echo ">>>>> Pressure for $resourceType $resource"
+      kubectl describe $resourceType $resource | grep "Pressure" | grep "True"
+    done
+  else
+    echo "Not supporteed yet"
+  fi
+}
+
 
 ##########################
 # Main script
@@ -132,6 +159,8 @@ case "${resourceType}" in
       getLabels "${resourceType}" "${label}"
     elif [ ! -z $zone ]; then
       getZones "${resourceType}" "${zone}"
+    elif [[ "$option" == "pressure" ]]; then
+      getPressure "${resourceType}"
     else
       echo ">>>>> No proper ${resourceType} option given...."; Usage
     fi
@@ -140,8 +169,14 @@ case "${resourceType}" in
     if [ ! -z $label ]; then
       getLabels "${resourceType}" "${label}"
     elif [[ "$option" == "ppn" ]]; then
-      echo ">>> Pods per node"
-      kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name,STATUS:.status.phase --sort-by=.spec.nodeName --all-namespaces
+      if [ ! -z $count ]; then
+        echo ">>> Amount of pods per node (all)"
+        kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name,STATUS:.status.phase --sort-by=.spec.nodeName --all-namespaces | sed -E 's/^([^ ]+) .*/\1/g' | sort | uniq -c
+      else
+        echo ">>> Pods per node (excl DaemonSets)"
+        kubectl get daemonset --all-namespaces | awk -F ' ' '{print $2}' > $$
+        kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name,STATUS:.status.phase --sort-by=.spec.nodeName --all-namespaces | grep -v -f $$
+      fi
     else
       echo ">>>>> No proper ${resourceType} option given...."; Usage
     fi
@@ -166,3 +201,5 @@ case "${resourceType}" in
     Usage
   ;;
 esac
+
+rm -rf $$

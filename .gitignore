@@ -1,0 +1,92 @@
+######################
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+######################
+# Security           #
+######################
+*.pem
+*.pub
+*.base64
+*-rsa
+*.bin
+
+######################
+# Generic            #
+######################
+tessie
+tempie/
+zzz_backup/
+data/
+*.log
+*.zip
+*.tar.gz
+*.tar
+*.temp
+*.tmp
+*.out
+*.secret
+*.git.ignore
+*.local
+tessie*
+tempie*
+
+######################
+# CI                 #
+######################
+tf-init-env.env
+tf-init-env.export
+build.env*
+cloud.env*
+foreignImages.env*
+scratch
+target/*
+!target/example/
+
+######################
+# Terraform / Terragrunt
+######################
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+errored.tfstate
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+**/.terragrunt*/*
+*terragrunt-debug.tfvars.json
+*backend.tf
+
+######################
+# Vagrant
+######################
+**/.vagrant
+
+######################
+# Kubernetes
+######################
+logs/
+*.status
+*.crt  
+*.csr
+*.key
+*.pfx
+kubeconfig_*
+kubeconfig-*
+*.name
+
+######################
+# NodeJS             #
+######################
+node_modules/
+**/.serverless
+**/venv

@@ -25,7 +25,7 @@ COLOR_PS1_DEFAULT_FG=$'\033[39m'
 Usage()
 {
   echo ""
-  echo "Usage: $PROGRAM -option"
+  echo "Usage: $PROGRAM -<option>"
   echo ""
   echo "options:"
   echo "- ps1                  : Only used in the initial setting in the .bash_profile"
@@ -34,6 +34,7 @@ Usage()
   echo "- psoff                : Globally disable AWS PS1 prompt"
   echo "- show                 : Show all AWS profiles. Thereafter one can manually export the \$AWS_PROFILE"
   echo "                         and the PS1 will change automatically"
+  echo "- select               : Select AWS profiles."
   exit 5
 }
 
@@ -70,7 +71,9 @@ AwsProfiles()
         else
           indent="$indent  "
         fi
-        [ "$profile" == "default" ] && defaultAccountSuffix=" - DON'T USE!!!" || defaultAccountSuffix=""
+        defaultAccountSuffix=""
+        [ "$profile" == "default" ] && defaultAccountSuffix=" - DON'T USE!!!"
+        [[ "$profile" =~ "preprod" ]] && defaultAccountSuffix=" - Migration account!!!"
         [ $option == "show" ] && echo "${indent}${count}. $profile (${profileRegions[$profile]})$defaultAccountSuffix"
         ((count=count+1))
       fi
@@ -80,7 +83,8 @@ AwsProfiles()
     [ -z "$currentProfile" ] && currentProfile="default"
     currentRegion=${profileRegions[$currentProfile]}
     if [ $option == "show" ]; then
-      echo -e "Change? export AWS_PROFILE=<profile> \n"
+      echo ""
+      echo -e ">>> Change? export AWS_PROFILE=<profile> \n"
     fi
 
   else
@@ -198,6 +202,11 @@ case "$1" in
     AwsProfiles show
     # for x in "${!profileRegions[@]}"; do printf "[%s]=%s\n" "$x" "${profileRegions[$x]}" ; done
   ;;
+  # select will be realized via export
+  # -select)
+  #   echo "Select AWS profiles"
+  #   AwsProfiles select
+  # ;;
   *)
     echo "Unknown option"
     Usage
