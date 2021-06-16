@@ -10,7 +10,10 @@ clusterName=aks-mgt-k8s-sbx
 # resourceGroup=K8S_WEU_PROD_3.0_1
 # clusterName=aks-mgt-k8s-prod
 
-
+# Base commands
+az aks show --name $clusterName --resource-group $resourceGroup
+az aks nodepool list --cluster-name $clusterName --resource-group $resourceGroup
+az monitor autoscale list --resource-group $resourceGroup
 
 # Versions and upgrade preperation
 export clusterVersion=$(
