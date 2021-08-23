@@ -13,11 +13,13 @@ read -r -d '' layers <<- EOM
 # 03-storage
 # 09-networking
 # 10-k8s-cluster
+# 10-k8s-cluster-proportional-autoscaler
 # 11-k8s-monitoring
+# # 12-k8s-appdynamics-monitoring
 # 12-k8s-logging
 # 12-k8s-logging-config
 # 13-k8s-kubecost
-# # 14-k8s-kuberhealthy
+# 14-k8s-kuberhealthy
 # 15-k8s-app-gw-ingress
 # 19-k8s-network-policies
 # 20-k8s-opa-gatekeeper
@@ -112,6 +114,37 @@ if [ ! -z $triggerValues ]; then
       [ ! -d $layer ] && continue
       [[ $layer =~ ^[[:space:]]*[\#]+ ]] && continue
       echo "Triggering layer $layer"
+        # # START Format all layer
+        # cd $layer
+        # terragrunt fmt
+        # cd - > /dev/null 2>&1
+        # # END Format all layer
+
+        # # START copy file
+        # cd $layer
+        # cp /Users/jerome/Services/Workspaces/git/eon/mgt-k8s-cluster/k8stenantonboarding/k8s-namespaces-resources/terraform-config.tf .
+        # cd - > /dev/null 2>&1
+        # # END copy file
+
+        # # START Init all layer
+        # cd $layer
+        # terragrunt init -upgrade
+        # cd - > /dev/null 2>&1
+        # # END Init all layer
+
+        # # START update statefile with new provider
+        # cd $layer
+        # terragrunt state replace-provider 'registry/terraform-plugins/kubernetes-alpha' 'registry.terraform.io/hashicorp/kubernetes-alpha'
+        # terragrunt state replace-provider 'registry/terraform-plugins/kustomization' 'registry.terraform.io/kbst/kustomization'
+        # cd - > /dev/null 2>&1
+        # # END update statefile with new provider
+
+        # # START apply change
+        # cd $layer
+        # terragrunt apply
+        # cd - > /dev/null 2>&1
+        # # END apply change
+
       curl --request POST \
         --form "token=$GITLAB_CI_TRIGGER_TOKEN" \
         --form "ref=$CI_COMMIT_BRANCH" \
