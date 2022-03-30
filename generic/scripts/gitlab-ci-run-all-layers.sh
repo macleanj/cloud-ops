@@ -12,23 +12,29 @@ read -r -d '' layers <<- EOM
 # 02-vault
 # 03-storage
 # 09-networking
+
 # 10-k8s-cluster
+# 10-k8s-cluster-pod-identity-controller
 # 10-k8s-cluster-proportional-autoscaler
 # 11-k8s-monitoring
-# # 12-k8s-appdynamics-monitoring
+
 # 12-k8s-logging
 # 12-k8s-logging-config
-# 13-k8s-kubecost
+
 # 14-k8s-kuberhealthy
+# 14-k8s-kuberhealthy-checks
 # 15-k8s-app-gw-ingress
 # 19-k8s-network-policies
 # 20-k8s-opa-gatekeeper
+
 # 21-k8s-opa-policy-templates
+
 # 22-k8s-opa-policies
-# 30-k8s-kured
 # 50-k8s-storage
 # 60-k8s-backup
 # 99-k8s-services-ingress
+
+# All (e.g. afterwards)
 EOM
 
 Usage()
@@ -111,8 +117,9 @@ if [ ! -z $triggerValues ]; then
     OLDIFS=$IFS
     IFS=$'\n'
     for layer in $layers; do
-      [ ! -d $layer ] && continue
       [[ $layer =~ ^[[:space:]]*[\#]+ ]] && continue
+      layer=$(echo $layer | sed -r 's/[[:space:]]*[\#]+.*$//g'| xargs)
+      [ ! -d $layer ] && continue
       echo "Triggering layer $layer"
         # # START Format all layer
         # cd $layer

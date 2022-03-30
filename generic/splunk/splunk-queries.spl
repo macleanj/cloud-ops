@@ -1,0 +1,62 @@
+# SPL is the abbreviation for Search Processing Language. SPL is designed by Splunk for use with Splunk software.
+# This file acts as a reference and cheatsheet for SPL.
+# Sources:
+# - https://herewload858.weebly.com/splunk-spl-cheat-sheet.html (refresh multiple to actually make it work. Hacked?)
+# - https://www.splunk.com/en_us/blog/tips-and-tricks/search-commands-stats-chart-and-timechart.html
+
+######################################################
+# Generic
+######################################################
+# Search record with one of the default fields not present
+# NOT transaction_id=* OR 
+NOT component=* OR NOT log_level=* OR NOT timestamp=* OR NOT message=*
+
+# Search record with all default fields not present
+# transaction_id=*
+component=* log_level=* timestamp=* message=*
+
+# Azure Metrics (should not be forwarded. Last 21/09/2021 13.39:42)
+metricName=*
+
+# Kubernetes Cluster example
+"extra_fields.cluster_name"="aks-mgt-k8s-sbx"
+# Kubernetes Namespace example
+"kubernetes.namespace_name"=gatekeeper*
+# Kubernetes Label example
+"kubernetes.labels.app"=gatekeeper
+
+######################################################
+# Kubernetes
+######################################################
+### -- ### -- ### -- OPA -- ### -- ### -- ###
+
+# Errors
+component=opa-gatekeeper logger=webhook log_level=ERROR
+# Total errors in selected timeframe
+component=opa-gatekeeper logger=webhook log_level=ERROR | stats count by log_level
+# Total errors per graph
+component=opa-gatekeeper logger=webhook log_level=ERROR | timechart span=1d count by log_level
+
+# Policy Violations
+component=opa-gatekeeper event_type=violation constraint_action IN (warn,deny)
+component=opa-gatekeeper event_type=violation constraint_action IN (warn,deny) | stats count by constraint_action
+component=opa-gatekeeper event_type=violation constraint_action IN (warn,deny) | timechart span=1d count by constraint_action
+
+######################################################
+# Cloud
+######################################################
+source="*azure*" `comment("Source taken from from eventhub topic")`
+
+category=kube-controller-manager
+
+category=kube-apiserver
+
+category=cluster-autoscaler
+
+category=ApplicationGatewayAccessLog
+
+category=ApplicationGatewayFirewallLog
+
+category=AuditEvent
+
+category=guard

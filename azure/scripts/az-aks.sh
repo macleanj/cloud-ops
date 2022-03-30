@@ -5,8 +5,6 @@ resourceGroup=K8S_WEU_SBX_3.0_1
 clusterName=aks-mgt-k8s-sbx
 # resourceGroup=K8S_WEU_DEV_3.0_1
 # clusterName=aks-mgt-k8s-dev
-# resourceGroup=K8S_WEU_PREPROD_3.0_1
-# clusterName=aks-mgt-k8s-pre
 # resourceGroup=K8S_WEU_PROD_3.0_1
 # clusterName=aks-mgt-k8s-prod
 
@@ -137,3 +135,26 @@ az aks show --name $clusterName --resource-group $resourceGroup |  jq -r '.sku'
 # IP addressed needed: 813960 / 64000 = 13
 aksResourceGroup=$(az aks show --resource-group $resourceGroup --name $clusterName --query nodeResourceGroup -o tsv)
 az network lb outbound-rule list --resource-group $aksResourceGroup --lb-name kubernetes -o table
+
+
+# Update identity
+az aks update --resource-group $resourceGroup --name $clusterName --enable-managed-identity --assign-identity /subscriptions/622b4053-790d-4938-9c89-35a1f3ab0137/resourceGroups/K8S_WEU_SBX_3.0_1/providers/Microsoft.ManagedIdentity/userAssignedIdentities/aks-mgt-k8s-sbx-aks-identity
+az resource update --ids /subscriptions/622b4053-790d-4938-9c89-35a1f3ab0137/resourcegroups/K8S_WEU_SBX_3.0_1/providers/Microsoft.ContainerService/managedClusters/aks-mgt-k8s-sbx
+# Update node image only (no upgrade)
+az aks nodepool update -n system -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+az aks nodepool update -n infra -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+az aks nodepool update -n generic -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+az aks nodepool update -n memory -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+az aks nodepool update -n cpu -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+az aks nodepool update -n gpu -g $resourceGroup --cluster-name $clusterName --max-surge 33%
+
+# Refetch MI on nodes (e.g. when changing from SP to MI)
+for nodepool in system infra generic memory cpu gpu; do
+  az aks nodepool upgrade -n $nodepool -g $resourceGroup --cluster-name $clusterName --node-image-only --no-wait
+done
+
+# Update node labels
+for nodepool in system infra; do
+  az aks nodepool update --resource-group $resourceGroup --cluster-name $clusterName --name $nodepool \
+  --labels kubernetes-role=$nodepool node-type=provider
+done
