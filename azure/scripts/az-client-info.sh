@@ -5,7 +5,7 @@
 now=$(date +%Y-%m-%d\ %H:%M:%S)
 programName=$(basename $0)
 programDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-baseName=$(echo ${programName} | sed -e 's/.sh//g')
+baseName=$(echo ${programName} | sed -e 's/\.sh//g')
 azCredentrialsDir="${HOME}/.azure/az-sp"
 debug=0
 
