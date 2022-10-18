@@ -12,9 +12,7 @@
 # - Service Principal MONITORING (skipped)
 #
 # Notes:
-# - Bring your own SP secret: https://www.avast.com/random-password-generator (36 characters, all allowed, start with normal character!!)
-# - The main RG Service Principal will have automated roles assignment
-# - Other SP roles need to be assigned manually (SPs will be obsoleted in the future -> Managed Identities)
+# - Bring your own SP secret is no longer supported....
 
 # Input Variables
 $tenantId         = '27d2fc0b-1403-47b9-bef5-f339ada03080'
@@ -22,12 +20,20 @@ $subscriptionName = 'ADB Safegate - Cortex - Dev'
 
 
 # Aligned with config
-$resourceGroup           = 'plt_ctx_enva'
-$resourceGroupBackup     = 'plt_ctx_enva_bkp'
+# # enva
+# $resourceGroup           = 'plt_ctx_enva'
+# $resourceGroupBackup     = 'plt_ctx_enva_bkp'
+# $region                  = 'westeurope'
+# $regionFailover          = 'northeurope'
+# $environment             = 'enva'
+# $resourcesName           = 'ctx-enva'
+# p-euw1-01
+$resourceGroup           = 'plt_ctx_p_euw1_01'
+$resourceGroupBackup     = 'plt_ctx_p_euw1_01_bkp'
 $region                  = 'westeurope'
 $regionFailover          = 'northeurope'
-$environment             = 'enva'
-$resourcesName           = 'ctx-enva'
+$environment             = 'p-euw1-01'
+$resourcesName           = 'ctx-p-euw1-01'
 
 $defaultTags = @{
   AssetID                = '12345'
