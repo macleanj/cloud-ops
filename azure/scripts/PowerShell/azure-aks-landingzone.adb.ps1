@@ -20,22 +20,31 @@ $subscriptionName = 'ADB Safegate - Cortex - Dev'
 
 
 # Aligned with config
-# # enva
-# $resourceGroup           = 'plt_ctx_enva'
-# $resourceGroupBackup     = 'plt_ctx_enva_bkp'
-# $region                  = 'westeurope'
-# $regionFailover          = 'northeurope'
-# $environment             = 'enva'
-# $resourcesName           = 'ctx-enva'
-# p-euw1-01
-$resourceGroup           = 'plt_ctx_p_euw1_01'
-$resourceGroupBackup     = 'plt_ctx_p_euw1_01_bkp'
+# enva
+$resourceGroup           = 'plt_ctx_enva'
+$resourceGroupBackup     = 'plt_ctx_enva_bkp'
 $region                  = 'westeurope'
 $regionFailover          = 'northeurope'
-$environment             = 'p-euw1-01'
-$resourcesName           = 'ctx-p-euw1-01'
+$environment             = 'enva'
+$resourcesName           = 'ctx-enva'
+# envb
+# $resourceGroup           = 'plt_ctx_envb'
+# $resourceGroupBackup     = 'plt_ctx_envb_bkp'
+# $region                  = 'westeurope'
+# $regionFailover          = 'northeurope'
+# $environment             = 'envb'
+# $resourcesName           = 'ctx-envb'
+# # p-euw1-01
+# $resourceGroup           = 'plt_ctx_p_euw1_01'
+# $resourceGroupBackup     = 'plt_ctx_p_euw1_01_bkp'
+# $region                  = 'westeurope'
+# $regionFailover          = 'northeurope'
+# $environment             = 'p-euw1-01'
+# $resourcesName           = 'ctx-p-euw1-01'
 
 $defaultTags = @{
+  Layer                  = 'Landing Zone'
+
   AssetID                = '12345'
   AssetLocation          = 'My AssetLocation'
   AssetOperator          = 'My AssetLocation'
@@ -90,7 +99,7 @@ if(!($azResourceGroup = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName
 } else {
   Write-Host "NOTICE: Resource Group `"$($resourceGroup)`" exists. Continuing....."
 }
-# Backup 
+# Backup
 # if(!($azResourceGroupBackup = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -eq $resourceGroupBackup})) {
 #   $azResourceGroupBackup = New-AzResourceGroup -Name $resourceGroupBackup -Location $region -Tag $defaultTags
 #   Write-Host "Creating resource groups `"$($resourceGroupBackup)`""
@@ -163,7 +172,7 @@ if(!($azApp = Get-AzADApplication | Where-Object {$_.DisplayName -eq $spName})) 
 }
 
 if(!($azSp = Get-AzADServicePrincipal -ApplicationId $azApp.AppId)) {
-  Write-Host "Assigning Service Principal to application`"$($spName)`""
+  Write-Host "Assigning Service Principal to Application`"$($spName)`""
   $azSp = New-AzADServicePrincipal -ApplicationId $azApp.AppId
 
   # Work-around: Remove any role assignments that are being created by the New-AzADServicePrincipal (which is be default Contributor on subscription level!!)
@@ -171,10 +180,6 @@ if(!($azSp = Get-AzADServicePrincipal -ApplicationId $azApp.AppId)) {
   Write-Host "NOTICE: Role Assigning 'Contributor' removed again (work-around)"
   Get-AzRoleAssignment -ObjectId $azSp.Id | ForEach-Object { $_ | Remove-AzRoleAssignment }
 
-  Write-Host "NOTICE: Give time for the Service Principal to be published....."
-  Start-Sleep -Seconds 60
-  Write-Host "Assigning 'Owner' to Resource Group `"$($resourceGroup)`""
-  New-AzRoleAssignment -ObjectId $azSp.Id -RoleDefinitionName Owner -Scope ('/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup)
   Write-Host @"
 #################################################################
 Service Principal information for $($azSp.DisplayName):
@@ -182,9 +187,29 @@ Service Principal information for $($azSp.DisplayName):
   client_id     : $($azSp.AppId)
   client_secret : See above
 #################################################################
-"@  
+"@
 } else {
-  Write-Host "NOTICE: Service Principal is already assigned to application `"$($spName)`". Continuing....."
+  Write-Host "NOTICE: Service Principal is already assigned to Application `"$($spName)`". Continuing....."
+  Write-Host @"
+#################################################################
+Service Principal information for $($azSp.DisplayName):
+  object_id     : $($azSp.Id)
+  client_id     : $($azSp.AppId)
+  client_secret : See above
+#################################################################
+"@
+}
+
+#####################################################################################
+# Assign Service Principal to RG (scope should be exact match)
+#####################################################################################
+if(!(Get-AzRoleAssignment -ObjectId $azSp.Id -RoleDefinitionName Owner | Where-Object {$_.Scope -eq ('/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup)})) {
+  Write-Host "NOTICE: Give time for the Service Principal to be published....."
+  Start-Sleep -Seconds 60
+  Write-Host "Assigning 'Owner' to Resource Group `"$($resourceGroup)`""
+  New-AzRoleAssignment -ObjectId $azSp.Id -RoleDefinitionName Owner -Scope ('/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup)
+} else {
+  Write-Host "NOTICE: Service Principal is already assigned to Resource Group `"$($resourceGroup)`". Continuing....."
 }
 
 # ##### Manual regenerate password and/or re-assign role for existing Service Principal (comment in commands)
@@ -224,11 +249,6 @@ Service Principal information for $($azSp.DisplayName):
 #   Write-Host "NOTICE: Role Assigning 'Contributor' removed again (work-around)"
 #   Get-AzRoleAssignment -ObjectId $azSp.Id | ForEach-Object { $_ | Remove-AzRoleAssignment }
 
-#   # Role Assignments
-#   # Write-Host "NOTICE: Give time for the Service Principal to be published....."
-#   # Start-Sleep -Seconds 60
-#   # Write-Host "Assigning 'Owner' to Resource Group `"$($resourceGroup)`""
-#   # New-AzRoleAssignment -ObjectId $azSp.Id -RoleDefinitionName Owner -Scope ('/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup)
 #   Write-Host @"
 # #################################################################
 # Service Principal information for $($azSp.DisplayName):
@@ -236,7 +256,7 @@ Service Principal information for $($azSp.DisplayName):
 #   client_id     : $($azSp.AppId)
 #   client_secret : See above
 # #################################################################
-# "@  
+# "@
 # } else {
 #   Write-Host "NOTICE: Service Principal is already assigned to application `"$($spName)`". Continuing....."
 # }
@@ -278,11 +298,6 @@ Service Principal information for $($azSp.DisplayName):
 #   Write-Host "NOTICE: Role Assigning 'Contributor' removed again (work-around)"
 #   Get-AzRoleAssignment -ObjectId $azSp.Id | ForEach-Object { $_ | Remove-AzRoleAssignment }
 
-#   # Role Assignments
-#   # Write-Host "NOTICE: Give time for the Service Principal to be published....."
-#   # Start-Sleep -Seconds 60
-#   # Write-Host "Assigning 'Owner' to Resource Group `"$($resourceGroup)`""
-#   # New-AzRoleAssignment -ObjectId $azSp.Id -RoleDefinitionName Owner -Scope ('/subscriptions/' + $subscriptionId + '/resourceGroups/' + $resourceGroup)
 #   Write-Host @"
 # #################################################################
 # Service Principal information for $($azSp.DisplayName):
@@ -290,7 +305,7 @@ Service Principal information for $($azSp.DisplayName):
 #   client_id     : $($azSp.AppId)
 #   client_secret : See above
 # #################################################################
-# "@  
+# "@
 # } else {
 #   Write-Host "NOTICE: Service Principal is already assigned to application `"$($spName)`". Continuing....."
 # }
