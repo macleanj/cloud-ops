@@ -90,3 +90,9 @@ kubeconfig-*
 node_modules/
 **/.serverless
 **/venv
+
+######################
+# Specific           #
+######################
+oc-ibm_pak
+oc-mirror

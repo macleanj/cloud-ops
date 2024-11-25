@@ -1,0 +1,17 @@
+# Overview
+
+Some commands to work with OpenShift operators. Sources:
+
+- [List all the operators installed in an RHOCP4 cluster](https://access.redhat.com/solutions/6986054)
+```bash
+
+oc get catalogsources -A # Where does the software come from
+oc get clusteroperators  # operators installed by DEFAULT in an OpenShift cluster. Comply with OCP version.
+oc get subs -A           # operators installed by admin, incl channels
+oc get operators -A      # simple overview of operators compared to the above
+oc get subscriptions -A  # operators installed by users, excl channels
+
+# Example
+oc get csv,subs,ip,pod -n multicluster-engine
+```
+

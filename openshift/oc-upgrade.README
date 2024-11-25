@@ -1,0 +1,12 @@
+# Overview
+
+Some commands to work with OpenShift upgrade. Sources:
+
+- s
+
+```bash
+export OC_ENABLE_CMD_UPGRADE_STATUS=true
+oc adm upgrade          # Check version
+oc adm upgrade status   # Check status of the upgrade
+```
+

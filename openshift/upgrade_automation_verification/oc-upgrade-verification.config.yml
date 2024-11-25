@@ -1,0 +1,23 @@
+general:
+    command_dir: .
+    commands:
+        - oc-upgrade-verification-operator-status.sh
+        - oc-upgrade-verification-operator-pods.sh
+operator:
+    Red Hat Advanced Cluster Manager (ACM):
+        name_short: acm # Lowercase. Corresponds to specific configuration.
+        cluster_types_deployed_on: [mgt] # choices: mgt, cs, nui
+        name: advanced-cluster-management
+        namespace: open-cluster-management
+        pod_namespaces:
+            - open-cluster-management
+            - open-cluster-management-agent-addon
+            - open-cluster-management-hub
+            - multicluster-engine
+        commands:
+            # Remaining manual (ACM):
+            - oc-upgrade-verification-operator-acm-cluster-status.sh
+            #   All Clusters -> Home -> Overview (should be accessible)
+            - oc-upgrade-verification-operator-acm-overview.sh
+            #   All Clusters -> Applications (should be accessible)
+            - oc-upgrade-verification-operator-acm-application-status.sh

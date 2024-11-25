@@ -1,0 +1,6 @@
+managed_clusters:
+    - local-cluster
+    - ceestac1ocp01
+    - ceestac2ocp01
+    - snuitac9ocp01-robuh1
+    - snuitac9ocp01-robuh2
