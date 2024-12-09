@@ -13,7 +13,7 @@ AAP_INVENTORY_FILE="inventories/4.12/DEVTEST/asset-inventory"
 AAP_CREDENTIALS_NAME_GIT="github_credentials"
 AAP_CREDENTIALS_NAME_SSH="ansible_cees_rhel8_ssh_key"
 AAP_CREDENTIALS_NAME_SECRET_STORE="xDev Thycotic Server"
-AAP_PLAYBOOK="plays/pre_check.yaml"
+AAP_PLAYBOOK="plays/post_check.yaml"
 
 PROGRAM=$(basename "$0")
 BASENAME=$(echo $(basename "$0") | sed -e 's/.sh//g')
