@@ -1,0 +1,202 @@
+# oc new-project jerome-test --description="Test project" --display-name="Jerome Test"
+# kubectl create ns jerome-test
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment-opa
+  namespace: jerome-test
+  annotations: {}
+    ### Seccomp
+    # https://kubernetes.io/docs/tutorials/clusters/seccomp/
+    # Pre-v1.19 (alpha): via annotation. Thereafter via securityContext.seccompProfile.type
+      # Allowed
+    # seccomp.security.alpha.kubernetes.io/pod: runtime/default
+    # container.seccomp.security.alpha.kubernetes.io/test-deployment-opa: runtime/default
+    # Not allowed
+    # seccomp.security.alpha.kubernetes.io/pod: unconfined
+    # container.seccomp.security.alpha.kubernetes.io/test-deployment-opa: unconfined
+
+    ### AppArmor
+    # https://kubernetes.io/docs/tutorials/clusters/apparmor/
+    # Note: AppArmor is currently in beta, so options are specified as annotations. Once support graduates to general availability, the annotations will be replaced with first-class fields.
+    # Allowed
+    # container.apparmor.security.beta.kubernetes.io/test-deployment-opa: runtime/default
+    # Not allowed
+    # container.apparmor.security.beta.kubernetes.io/test-deployment-opa: unconfined
+    # Custom example
+    # Tell Kubernetes to apply the AppArmor profile "k8s-apparmor-example-deny-write".
+    # container.apparmor.security.beta.kubernetes.io/test-deployment-opa: localhost/k8s-apparmor-example-deny-write
+  labels:
+    app.kubernetes.io/name: test-deployment-opa
+    namespace: jerome-test # Mandatory when using Istio service mesh!!
+spec:
+  # Not possible here
+  # hostnetworkingports
+  # hostNetwork: true # Defaults to false
+
+  # Not possible here
+  # hostnamespaces. Seems not to be supported anymore?
+  # hostIPC: true # Defaults to false
+  # hostPID: true # Defaults to false
+
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: test-deployment-opa
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: test-deployment-opa
+      annotations:
+        # Istio resource downsizing
+        sidecar.istio.io/proxyCPU: 200m
+        sidecar.istio.io/proxyCPULimit: 300m
+        sidecar.istio.io/proxyMemory: 256Mi
+        sidecar.istio.io/proxyMemoryLimit: 256Mi
+    spec:
+      # hostnetworkingports
+      # hostNetwork: true # Defaults to false
+
+      # hostnamespaces. Seems not to be supported anymore?
+      # hostIPC: true # Defaults to false
+      # hostPID: true # Defaults to false
+
+      securityContext:
+        # Default allowed between 1000 and 2000. Bitnami is 1001
+        runAsUser: 1001
+        runAsGroup: 1001
+        supplementalGroups: [1002, 1003]
+        fsGroup: 1000
+
+        # Not possible here
+        # privileged: false
+        # allowPrivilegeEscalation: false  
+        # capabilities:
+        #   add: ["NET_ADMIN", "SYS_TIME"] # Default is some capabilities like chown/chmod.
+        # readOnlyRootFilesystem: false # Must be set!!
+
+        # forbiddensysctls
+        # sysctls:
+        #   - name: kernel.msgmax # Blocked
+        #     value: "65536"
+        #   - name: other.msgmax  # Allowed
+        #     value: "65536"
+
+        # Pod level seLinuxOptions
+        # seLinuxOptions:
+        #   level: "s0:c123,c456"        # Configured as example
+        #   role: "object_r"             # Configured as example
+        #   type: "svirt_sandbox_file_t" # Configured as example
+        #   user: "system_u"             # Configured as example
+      containers:
+        - name: test-deployment-opa
+          image: docker.io/jmaclean/hello-world:6.0 # Public
+          # image: docker.io/alpine:3.12.0 # Used to verify if testrunner namespace has the necessary OPAs disabled.
+          command: ["sleep"]
+          args: ["1000"]
+          imagePullPolicy: Always
+          securityContext:
+            # New on OpenShift
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true # New for pod-security-standards? https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+            # privileged: true
+            allowPrivilegeEscalation: false # Must be set!!
+            capabilities:
+              drop: ["ALL"]
+            # capabilities:
+            #   add: ["NET_ADMIN", "SYS_TIME"] # Default is some capabilities like chown/chmod.
+            #   drop: ["NONE"]
+
+            # runAsGroup: 1001 # Optional
+            # Not possible here
+            # supplementalGroups: [1002, 1003]
+            # fsGroup: 1001
+
+            readOnlyRootFilesystem: true # Must be set!!
+
+            # Allowed: procMount: Default (which is the default). procMount: Unmasked is ignored somehow and defaulted to Default (!?!)
+            # procMount: Unmasked #Default
+
+            # Container level seLinuxOptions
+            # seLinuxOptions:
+            #   level: "s0:c123,c456"        # Configured as example
+            #   role: "object_r"             # Configured as example
+            #   type: "svirt_sandbox_file_t" # Configured as example
+            #   user: "system_u"             # Configured as example
+          livenessProbe:
+            exec:
+              command:
+                - echo
+                - livenessProbe
+          readinessProbe:
+            exec:
+              command:
+                - echo
+                - readinessProbe
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 50Mi
+          ports:
+            - containerPort: 8080
+              # hostPort: 8080
+          volumeMounts:
+            - name: vol-run
+              mountPath: /run
+            - name: vol-tmp
+              mountPath: /tmp
+            - name: vol-app-scratch
+              mountPath: /app/scratch
+            - name: vol-app-cache
+              mountPath: /var/cache/nginx/
+            - name: vol-app-logs
+              mountPath: /var/log/nginx/
+            # - mountPath: "/test-pvc" # For testing OPA only
+            #   name: vol-test-pvc
+            # - mountPath: "/test-hostpath" # For testing OPA only
+            #   name: vol-test-hostpath
+      volumes:
+        - name: vol-run
+          emptyDir: {}
+        - name: vol-tmp
+          emptyDir: {}
+        - name: vol-app-scratch
+          emptyDir: {}
+        - name: vol-app-cache
+          emptyDir: {}
+        - name: vol-app-logs
+          emptyDir: {}
+        # - name: vol-test-pvc # For testing OPA only
+        #   persistentVolumeClaim:
+        #     claimName: test-pvc-disk 
+        # - name: vol-test-hostpath
+        #   hostPath:
+        #     path: /tmp/test-hostpath
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-deployment-opa
+  namespace: jerome-test
+  labels:
+    app.kubernetes.io/name: test-deployment-opa
+spec:
+  # type: NodePort # For testing OPA only
+  # type: LoadBalancer # For testing OPA only
+  ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    - name: secure
+      port: 8443
+      protocol: TCP
+      targetPort: 8483
+  selector:
+    app.kubernetes.io/name: test-deployment-opa

@@ -1,0 +1,87 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: jerome-test-deployment-istio-ingress
+  namespace: jerome-test
+spec:
+  host: >-
+    jerome-test-istio-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+  to:
+    kind: Service
+    name: istio-ingressgateway
+    weight: 100
+  port:
+    targetPort: https
+  tls:
+    termination: passthrough
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: jerome-test-selfsigned-cluster-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: jerome-test-deployment-istio
+  namespace: istio-system
+spec:
+  commonName: jerome-test-istio-ingress
+  dnsNames:
+  - jerome-test-istio-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+  duration: 8760h0m0s
+  issuerRef:
+    kind: ClusterIssuer
+    group: cert-manager.io
+    name: jerome-test-selfsigned-cluster-issuer
+  renewBefore: 24h0m0s
+  secretName: jerome-test-deployment
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: jerome-test-deployment
+  namespace: jerome-test
+spec:
+  selector:
+    istio: ingressgatewayx
+  servers:
+  - hosts:
+    - jerome-test-istio-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+  - hosts:
+    - jerome-test-istio-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+    port:
+      name: https
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: jerome-test-deployment-istio
+      # mode: MUTUAL
+      mode: SIMPLE
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: jerome-test-deployment
+  namespace: jerome-test
+spec:
+  hosts:
+    - jerome-test-istio-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+  gateways:
+    - jerome-test/jerome-test-deployment
+  http:
+    - route:
+        - destination:
+            host: jerome-test.jerome-test-deployment.svc.cluster.local
+            port:
+              number: 8080
