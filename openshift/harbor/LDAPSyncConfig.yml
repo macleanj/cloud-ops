@@ -1,0 +1,26 @@
+# kind: LDAPSyncConfig
+# apiVersion: v1
+# url: ldaps://ADDS.eulisa.local:636
+# insecure: false
+# bindDN: CN=bind_user,OU=SERVICE_USERS,OU=IBM,DC=eulisa,DC=local
+# bindPassword:
+#   file: "/etc/secrets/bindPassword"
+# ca: "/ldap-sync/ca/ca.crt"
+# augmentedActiveDirectory:
+#     groupsQuery:
+#         baseDN: "OU=OPENSHIFT,OU=APPLICATIONS,DC=eulisa,DC=local"
+#         scope: sub
+#         derefAliases: never
+#         pageSize: 0
+#     groupUIDAttribute: dn
+#     groupNameAttributes: [ cn ]
+#     usersQuery:
+#         baseDN: DC=eulisa,DC=local
+#         scope: sub
+#         derefAliases: never
+#         filter: (objectclass=person)
+#         pageSize: 0
+#     groupMembershipAttributes: [ "memberOf:1.2.840.113556.1.4.1941:" ]
+#     userNameAttributes: [ userPrincipalName ]
+#     tolerateMemberNotFoundErrors: true
+#     tolerateMemberOutOfScopeErrors: true

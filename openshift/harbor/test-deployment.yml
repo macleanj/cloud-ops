@@ -1,0 +1,113 @@
+# project and debug
+# oc new-project jerome-test --description="Test project" --display-name="Jerome Test"
+# oc patch namespace jerome-test --type=merge -p '{"metadata": {"annotations": { "scheduler.alpha.kubernetes.io/defaultTolerations": "[{\"operator\": \"Exists\"}]"}}}'
+# oc debug node/<node> --to-namespace jerome-test
+
+# registry
+# oc get image.config.openshift.io/cluster -o yaml
+# podman push --tls-verify=false ceesdev1art00.eulisa.local/docker/testcontainers/jerome/hello-world:6.0
+# https://medium.com/@emmaliaocode/how-to-config-a-cluster-wide-image-pull-secret-for-an-openshift-cluster-ocp-okd-b9aeffb43625
+
+# nslookup
+# harbor    10.200.2.198
+# harbor2   10.200.2.199
+
+# Debug: https://access.redhat.com/solutions/4976641
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jerome-test-deployment-harbor
+  namespace: ext-monitoring-harbor
+  annotations: {}
+  labels:
+    app.kubernetes.io/name: jerome-test-deployment-harbor
+    namespace: jerome-test # Mandatory when using Istio service mesh!!
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jerome-test-deployment-harbor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jerome-test-deployment-harbor
+      annotations:
+        # Istio resource downsizing
+        sidecar.istio.io/proxyCPU: 200m
+        sidecar.istio.io/proxyCPULimit: 300m
+        sidecar.istio.io/proxyMemory: 256Mi
+        sidecar.istio.io/proxyMemoryLimit: 256Mi
+    spec:
+      securityContext:
+        # Not possible with OCP
+        # runAsUser: 1001
+        # runAsGroup: 1001
+        # supplementalGroups: [1002, 1003]
+        # fsGroup: 1001
+      containers:
+        - name: jerome-test-deployment-harbor
+          image: registry-testcontainers/hello-world:6.1
+          # image: harbor2.ocpasset.local:5001/testcontainers/hello-world:6.1
+          # image: docker.io/jmaclean/hello-world:6.3 # Public
+          # image: docker.io/alpine:3.12.0 # Used to verify if testrunner namespace has the necessary OPAs disabled.
+
+          # Comment to get webserver hello-world
+          # command: ["sleep"]
+          # args: ["1000"]
+          imagePullPolicy: Always
+          securityContext:
+            # OpenShift specific
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true # New for pod-security-standards? https://kubernetes.io/docs/concepts/security/pod-security-standards/
+            
+            allowPrivilegeEscalation: false # Must be set!!
+            capabilities:
+              drop: ["ALL"]
+            # capabilities:
+            #   add: ["NET_ADMIN", "SYS_TIME"] # Default is some capabilities like chown/chmod.
+            #   drop: ["NONE"]
+            readOnlyRootFilesystem: true # Must be set!!
+          livenessProbe:
+            exec:
+              command:
+                - echo
+                - livenessProbe
+          readinessProbe:
+            exec:
+              command:
+                - echo
+                - readinessProbe
+          resources:
+            requests:
+              cpu: 100m
+              memory: 50Mi
+            limits:
+              cpu: 100m
+              memory: 50Mi
+          ports:
+            - containerPort: 8080
+            - containerPort: 8443
+          volumeMounts:
+            - name: vol-run
+              mountPath: /run
+            - name: vol-tmp
+              mountPath: /tmp
+            - name: vol-app-scratch
+              mountPath: /app/scratch
+            - name: vol-app-cache
+              mountPath: /var/cache/nginx/
+            - name: vol-app-logs
+              mountPath: /var/log/nginx/
+      volumes:
+        - name: vol-run
+          emptyDir: {}
+        - name: vol-tmp
+          emptyDir: {}
+        - name: vol-app-scratch
+          emptyDir: {}
+        - name: vol-app-cache
+          emptyDir: {}
+        - name: vol-app-logs
+          emptyDir: {}

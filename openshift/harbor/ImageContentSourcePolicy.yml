@@ -1,0 +1,9 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: harbor-testing
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - harbor2.ocpasset.local:5001/testcontainers
+    source: registry-testcontainers
