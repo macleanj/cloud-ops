@@ -1,0 +1,26 @@
+# # Route EOF issues in app pod (Application is not available) -> restart cert-manager-webhook, restart app pod
+# # Route Gateway timeout issue -> https://access.redhat.com/solutions/6808481
+# # Console certificate: kubectl get secret -n openshift-console console-serving-cert -o yaml  | grep crt | awk '{print $2}'| base64 -d | openssl x509 -noout -enddate -startdate
+# # oc -n openshift-monitoring exec -it prometheus-k8s-0 -- cat /etc/prometheus/config_out/prometheus.env.yaml
+# ---
+# # prometheus-istio
+# kind: Route
+# apiVersion: route.openshift.io/v1
+# metadata:
+#   name: jerome-prometheus-istio
+#   namespace: istio-system
+#   labels:
+#     app: prometheus
+# spec:
+#   # callback goes wrong
+#   host: jerome-prometheus-istio.apps.ceestac2ocp01.ees.devtest.eulisa.local
+#   to:
+#     kind: Service
+#     name: prometheus
+#     weight: 100
+#   tls:
+#     # termination: edge
+#     # termination: reencrypt
+#     termination: passthrough # on Service/Pod. Does not support "path"
+#   #   insecureEdgeTerminationPolicy: Redirect
+#   # wildcardPolicy: None

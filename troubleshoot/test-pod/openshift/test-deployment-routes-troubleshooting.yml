@@ -1,0 +1,23 @@
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: jerome-test-deployment-direct-ingress
+  namespace: jerome-test
+spec:
+  host: >-
+    jerome-test-direct-ingress.apps.ceestac2ocp01.ees.devtest.eulisa.local
+  to:
+    kind: Service
+    name: jerome-test-deployment
+    weight: 100
+  port:
+    targetPort: web
+    # targetPort: secure # Needs passthrough
+  # path: /
+  tls:
+    termination: edge # Default
+    # termination: passthrough # on Service/Pod. Does not support "path"
+    # termination: reencrypt # Cannot be used when using own CA for Self-Signed Certificate
+    # insecureEdgeTerminationPolicy: Redirect # Redirect to https (disable for testing)
+  # wildcardPolicy: None
