@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# Examples for manual configurations:
-# Host 1 - local laptop - host 2 on port 9997
-#   - ssh -L 127.0.0.1:9997:splunk.eulisa.local:9997 jerome@localhost
-#   - ssh -R 9997:127.0.0.1:9997 urgency@harbor2.ocpasset.local
 
 import os
 import argparse
